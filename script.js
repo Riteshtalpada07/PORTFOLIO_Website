@@ -32,18 +32,36 @@ if (themeToggle) {
     });
 }
 
+const loader = document.getElementById("loader");
 
-window.addEventListener("load", function () {
-    let loader = document.getElementById("loader");
+if (loader) {
+    let isLoaderHidden = false;
+    const minVisibleMs = 2500;
+    const scriptStart = Date.now();
 
-    // Minimum time (2 seconds)
-    setTimeout(() => {
+    const hideLoader = () => {
+        if (isLoaderHidden) return;
+        isLoaderHidden = true;
+
         loader.style.opacity = "0";
-        loader.style.transition = "0.5s";
+        loader.style.transition = "opacity 0.4s ease";
+        loader.style.pointerEvents = "none";
 
         setTimeout(() => {
             loader.style.display = "none";
-        }, 500);
+        }, 400);
+    };
 
-    }, 2000); // 2000ms = 2 seconds
-});
+    const hideLoaderWithMinDelay = () => {
+        const elapsed = Date.now() - scriptStart;
+        const remaining = Math.max(0, minVisibleMs - elapsed);
+        setTimeout(hideLoader, remaining);
+    };
+
+    // Hide when DOM is ready; don't wait for every external asset.
+    document.addEventListener("DOMContentLoaded", hideLoaderWithMinDelay, { once: true });
+    window.addEventListener("load", hideLoaderWithMinDelay, { once: true });
+
+    // Final safety fallback so loader can never stay forever.
+    setTimeout(hideLoader, 5000);
+}
