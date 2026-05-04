@@ -310,6 +310,13 @@ body.dark-theme .navbar-toggler-icon {
     font-size: small;
 }
 
+/* Keep CTA look on desktop, avoid overflow on small screens */
+@media (max-width: 768px) {
+    .btn {
+        scale: 1;
+    }
+}
+
 .btn-1{
     position: relative;
     overflow: hidden;
@@ -354,6 +361,19 @@ body.dark-theme .navbar-toggler-icon {
     justify-content: space-around;
     position: fixed;
     
+}
+
+@media (max-width: 1200px) {
+    .Right-icones {
+        width: 56px;
+        right: 0;
+    }
+}
+
+@media (max-width: 992px) {
+    .Right-icones {
+        display: none;
+    }
 }
 
 .Right-icones i{
@@ -465,6 +485,17 @@ body.dark-theme .navbar-toggler-icon {
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 
     width: 100%;
+}
+
+#contact .container {
+    width: min(100%, 640px) !important;
+}
+
+@media (max-width: 576px) {
+    #contact .container {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
 }
 body.dark-theme .contact-form {
     background: #334155;
