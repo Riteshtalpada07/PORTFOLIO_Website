@@ -38,10 +38,6 @@ A modern, responsive personal portfolio website built with HTML, CSS, JavaScript
 │   └── document/
 │       └── RITESH TALPADA.pdf # Resume
 ├── images/                    # Image assets
-│   ├── logos/
-│   ├── backgrounds/
-│   ├── profile/
-│   └── icons/
 └── node_modules/              # Dependencies
 ```
 
