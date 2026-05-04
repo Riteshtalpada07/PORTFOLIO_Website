@@ -16,7 +16,7 @@ A modern, responsive personal portfolio website built with HTML, CSS, JavaScript
 **Frontend**
 - HTML5
 - CSS3
-- Vanilla JavaScript
+- JavaScript
 
 **Backend**
 - Node.js
