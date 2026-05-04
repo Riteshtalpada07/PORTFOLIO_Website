@@ -69,6 +69,7 @@ if (loader) {
 const contactForm = document.getElementById("contactForm");
 const contactStatus = document.getElementById("contactStatus");
 const contactSubmitBtn = document.getElementById("contactSubmitBtn");
+const CONTACT_REQUEST_TIMEOUT_MS = 15000;
 
 if (contactForm) {
     contactForm.addEventListener("submit", async (event) => {
@@ -99,11 +100,16 @@ if (contactForm) {
         }
 
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), CONTACT_REQUEST_TIMEOUT_MS);
+
             const response = await fetch("/contact", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
 
             const result = await response.json();
 
@@ -118,7 +124,10 @@ if (contactForm) {
             }
         } catch (error) {
             if (contactStatus) {
-                contactStatus.textContent = error.message || "Unable to send message.";
+                const message = error.name === "AbortError"
+                    ? "Request timed out. Please try again."
+                    : (error.message || "Unable to send message.");
+                contactStatus.textContent = message;
                 contactStatus.className = "text-center mt-3 mb-0 small text-danger";
             }
         } finally {

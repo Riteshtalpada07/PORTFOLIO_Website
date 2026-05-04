@@ -29,6 +29,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(__dirname));
 
+console.log('SMTP configured:', {
+    host: Boolean((process.env.SMTP_HOST || '').trim()),
+    user: Boolean((process.env.SMTP_USER || '').trim()),
+    pass: Boolean((process.env.SMTP_PASS || '').trim()),
+    from: Boolean((process.env.MAIL_FROM_EMAIL || '').trim()),
+    to: Boolean((process.env.CONTACT_TO || '').trim())
+});
+
 app.post('/contact', async (req, res) => {
     const { name, email, message } = req.body;
 
@@ -59,6 +67,9 @@ app.post('/contact', async (req, res) => {
         port: smtpPort,
         secure: smtpSecure,
         requireTLS: !smtpSecure,
+        connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT || 10000),
+        greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT || 10000),
+        socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT || 15000),
         auth: {
             user: smtpUser,
             pass: smtpPass
