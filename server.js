@@ -62,20 +62,6 @@ app.post('/contact', async (req, res) => {
         });
     }
 
-    let transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpSecure,
-        requireTLS: !smtpSecure,
-        connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT || 10000),
-        greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT || 10000),
-        socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT || 15000),
-        auth: {
-            user: smtpUser,
-            pass: smtpPass
-        }
-    });
-
     let mailOptions = {
         from: fromEmail,
         replyTo: email,
@@ -85,8 +71,48 @@ app.post('/contact', async (req, res) => {
     };
 
     try {
-        await transporter.sendMail(mailOptions);
-        return res.json({ ok: true, message: "Message sent successfully!" });
+        const smtpPorts = smtpPort === 587 ? [587, 2525] : [smtpPort];
+        let lastError = null;
+
+        for (const portCandidate of smtpPorts) {
+            const secureCandidate = portCandidate === 465;
+            const transporter = nodemailer.createTransport({
+                host: smtpHost,
+                port: portCandidate,
+                secure: secureCandidate,
+                // Keep TLS optional on STARTTLS ports; some relays/cloud networks are strict.
+                requireTLS: false,
+                connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT || 10000),
+                greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT || 10000),
+                socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT || 15000),
+                auth: {
+                    user: smtpUser,
+                    pass: smtpPass
+                }
+            });
+
+            try {
+                await transporter.sendMail(mailOptions);
+                return res.json({ ok: true, message: "Message sent successfully!" });
+            } catch (error) {
+                lastError = error;
+                const isNetworkError = error.code === 'ESOCKET' || error.code === 'ETIMEDOUT';
+                const hasNextPort = smtpPorts.indexOf(portCandidate) < smtpPorts.length - 1;
+
+                console.error(`SMTP attempt failed on port ${portCandidate}:`, {
+                    code: error.code,
+                    command: error.command,
+                    response: error.response,
+                    message: error.message
+                });
+
+                if (!isNetworkError || !hasNextPort) {
+                    throw error;
+                }
+            }
+        }
+
+        throw lastError || new Error('Unable to send message.');
     } catch (error) {
         console.error('Mail send failed:', {
             code: error.code,
