@@ -14,6 +14,14 @@ const getMailErrorMessage = (error) => {
         return 'Could not connect to SMTP server. Check SMTP host/port/firewall.';
     }
 
+    if (error.code === 'EENVELOPE' || /sender address rejected/i.test(error.message || '')) {
+        return 'Sender email rejected. MAIL_FROM_EMAIL must be a verified sender address.';
+    }
+
+    if (/Missing credentials for "PLAIN"/i.test(error.message || '')) {
+        return 'SMTP credentials are missing. Set SMTP_USER and SMTP_PASS in deployment environment variables.';
+    }
+
     return error.message || 'Error sending message.';
 };
 
@@ -33,7 +41,10 @@ app.post('/contact', async (req, res) => {
     const contactTo = (process.env.CONTACT_TO || smtpUser || '').trim();
     const smtpHost = (process.env.SMTP_HOST || '').trim();
     const smtpPort = Number(process.env.SMTP_PORT || 587);
-    const smtpSecure = String(process.env.SMTP_SECURE || 'false').toLowerCase() === 'true';
+    const smtpSecureValue = (process.env.SMTP_SECURE || '').trim().toLowerCase();
+    const smtpSecure = smtpSecureValue
+        ? smtpSecureValue === 'true'
+        : smtpPort === 465;
     const fromEmail = (process.env.MAIL_FROM_EMAIL || smtpUser).trim();
 
     if (!smtpHost || !smtpPort || !smtpUser || !smtpPass || !contactTo || !fromEmail) {
@@ -47,6 +58,7 @@ app.post('/contact', async (req, res) => {
         host: smtpHost,
         port: smtpPort,
         secure: smtpSecure,
+        requireTLS: !smtpSecure,
         auth: {
             user: smtpUser,
             pass: smtpPass
